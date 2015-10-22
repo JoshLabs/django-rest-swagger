@@ -577,6 +577,7 @@ var SwaggerModelProperty = function(name, obj) {
   this.name = name;
   this.dataType = obj.type || obj.dataType || obj["$ref"];
   this.isCollection = this.dataType && (this.dataType.toLowerCase() === 'array' || this.dataType.toLowerCase() === 'list' || this.dataType.toLowerCase() === 'set');
+  this.isDict = this.dataType && !this.isCollection && (this.dataType.toLowerCase() === 'dict');
   this.descr = obj.description;
   this.required = obj.required;
   if (obj.items != null) {
@@ -587,7 +588,7 @@ var SwaggerModelProperty = function(name, obj) {
       this.refDataType = obj.items.$ref;
     }
   }
-  this.dataTypeWithRef = this.refDataType != null ? (this.dataType + '[' + this.refDataType + ']') : this.dataType;
+  this.dataTypeWithRef = this.refDataType != null ? this.isDict ? this.dataType : (this.dataType + '[' + this.refDataType + ']') : this.dataType;
   if (obj.allowableValues != null) {
     this.valueType = obj.allowableValues.valueType;
     this.values = obj.allowableValues.values;
@@ -609,7 +610,7 @@ SwaggerModelProperty.prototype.getSampleValue = function(modelsToIgnore) {
   if ((this.refModel != null) && (modelsToIgnore.indexOf(prop.refModel.name) === -1)) {
     result = this.refModel.createJSONSample(modelsToIgnore);
   } else {
-    if (this.isCollection) {
+    if (this.isCollection || this.isDict) {
       result = this.toSampleValue(this.refDataType);
     } else {
       result = this.toSampleValue(this.dataType);
