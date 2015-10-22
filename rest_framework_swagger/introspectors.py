@@ -979,6 +979,15 @@ class YAMLDocstringParser(object):
                     serializers.append(serializer)
                 except (ImportError, ValueError):
                     pass
+        types = self.object.get('type', [])
+        for type_name in types:
+            serializer = types[type_name].get('pytype', None)
+            if serializer is not None:
+                try:
+                    serializer = self._load_class(serializer, callback)
+                    serializers.append(serializer)
+                except (ImportError, ValueError):
+                    pass
         return serializers
 
     def get_request_serializer_class(self, callback):
