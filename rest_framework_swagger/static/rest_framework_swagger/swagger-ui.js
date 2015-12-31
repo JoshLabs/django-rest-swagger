@@ -1762,7 +1762,9 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
       _ref8 = form.find('input[type~="file"]');
       for (_l = 0, _len3 = _ref8.length; _l < _len3; _l++) {
         el = _ref8[_l];
-        bodyParam.append($(el).attr('name'), el.files[0]);
+        if (el.files[0]) {
+          bodyParam.append($(el).attr('name'), el.files[0]);
+        }
       }
       log(bodyParam);
       this.invocationUrl = this.model.supportHeaderParams() ? (headerParams = this.model.getHeaderParams(map), this.model.urlify(map, false)) : this.model.urlify(map, true);
