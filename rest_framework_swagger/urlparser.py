@@ -78,9 +78,14 @@ class UrlParser(object):
         filtered_paths = set()
         base_path = self.__get_base_path__(root_paths)
         for path in root_paths:
-            resource = path.replace(base_path, '', 1).split('/')[0]
-            filtered_paths.add(base_path + resource)
-
+            resource = path.replace(base_path, '', 1)
+            if resource.startswith("api"):
+                filtered_paths.add(resource)
+            else:
+                # Match third level apis i.e if api is '/v1/api/students/excel-download' then we receive the group '/v1/api/students'
+                r = re.search(r'(v\d+/api/[^/]*)/?', resource)
+                if r:
+                    filtered_paths.add(r.groups()[0])
         return list(filtered_paths)
 
     def __get_base_path__(self, root_paths):
