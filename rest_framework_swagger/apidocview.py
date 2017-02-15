@@ -1,4 +1,5 @@
 from django.utils import six
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.views import APIView
 
@@ -7,6 +8,8 @@ from rest_framework_swagger import SWAGGER_SETTINGS
 
 
 class APIDocView(APIView):
+    authentication_classes = [SessionAuthentication]
+
     def initial(self, request, *args, **kwargs):
         self.permission_classes = (self.get_permission_class(request),)
         self.host = request.build_absolute_uri()
