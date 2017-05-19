@@ -1,4 +1,5 @@
 import logging
+import os
 import urlparse
 from django.core.files.base import ContentFile
 from django.core.files.storage import get_storage_class
@@ -16,25 +17,40 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     def handle(self, *args, **options):
         assert rfs.SWAGGER_SETTINGS.get(u'ENABLE_OFFLINE_DOCS', False), u'Swagger setting ENABLE_OFFLINE_DOCS must be set to generate offline docs'
-        logger.info(u'Dropping previous docs')
+        logger.info(u'Deleting previous docs')
         storage_class = rfs.SWAGGER_SETTINGS.get(u'DEFAULT_DOCS_STORAGE', u'')
         assert storage_class, u'Swagger setting DEFAULT_DOCS_STORAGE must be set to generate offline docs'
         storage = get_storage_class(storage_class)(**rfs.SWAGGER_SETTINGS.get(u'FILE_STORAGE_KWARGS', {}))
         if storage.exists(u'docs'):
-            dirs, files = storage.listdir(u'docs')
-            for filename in files:
-                logger.info(u'Dropping {}'.format(filename))
-                storage.delete(u'docs/{}'.format(filename))
+            clear_dir(u'docs', storage)
 
-        logger.info(u'Generating base.json')
+        logger.info(u'Generating Docs')
         apps = get_apps()
         renderer = JSONRenderer()
-        storage.save(u'docs/base.json', ContentFile(renderer.render(apps)))
         for app in apps[u'apis']:
-            path = urlparse.urlparse(app[u'path']).path
-            path = path.lstrip(u'/')
+            path = app[u'path'].lstrip(u'/')
             logger.info(u'Processing path: {}'.format(path))
-            storage.save(u'docs/{}.json'.format(path.replace(u'/', u'_')), ContentFile(renderer.render(generate_offline_docs(path))))
+            filename = u'docs/{}.json'.format(path.replace(u'/', os.sep))
+            storage.save(filename, ContentFile(renderer.render(generate_offline_docs(path))))
+            app[u'path'] = storage.url(filename).replace(u'json', u'{format}')
+            print app[u'path']
+        logger.info(u'Generating base.json')
+        storage.save(u'docs/base.json', ContentFile(renderer.render(apps)))
+
+
+def clear_dir(path, storage):
+    """
+    Deletes the given relative path using the destination storage backend.
+    :param path(string): Path within the storage whose files/directories to be removed
+    :param storage(object): Object of class django.core.files.storage.Storage
+    """
+    dirs, files = storage.listdir(path)
+    for filename in files:
+        file_path = os.path.join(path, filename)
+        logger.info(u"Deleting '{}'".format(file_path))
+        storage.delete(file_path)
+    for dir_name in dirs:
+        clear_dir(os.path.join(path, dir_name), storage)
 
 
 def get_apps():

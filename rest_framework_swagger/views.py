@@ -149,23 +149,16 @@ class SwaggerApiView(APIDocView):
     renderer_classes = (JSONRenderer, )
 
     def get(self, request, path):
-        if rfs.SWAGGER_SETTINGS.get(u'ENABLE_OFFLINE_DOCS'):
-            storage_class = rfs.SWAGGER_SETTINGS.get(u'DEFAULT_DOCS_STORAGE')
-            assert storage_class, u'Swagger setting DEFAULT_DOCS_STORAGE must be set for offline mode to work'
-            storage = get_storage_class(storage_class)(**rfs.SWAGGER_SETTINGS.get(u'FILE_STORAGE_PARAMS', {}))
-            f = storage.open('docs/{}.json'.format(path.replace('/', '_')))
-            return Response(json.loads(f.read()))
-        else:
-            apis = self.get_apis_for_resource(path)
-            generator = DocumentationGenerator(for_user=request.user)
-            return Response({
-                'apiVersion': rfs.SWAGGER_SETTINGS.get('api_version', ''),
-                'swaggerVersion': '1.2',
-                'basePath': self.api_full_uri.rstrip('/'),
-                'resourcePath': '/' + path,
-                'apis': generator.generate(apis),
-                'models': generator.get_models(apis),
-            })
+        apis = self.get_apis_for_resource(path)
+        generator = DocumentationGenerator(for_user=request.user)
+        return Response({
+            'apiVersion': rfs.SWAGGER_SETTINGS.get('api_version', ''),
+            'swaggerVersion': '1.2',
+            'basePath': self.api_full_uri.rstrip('/'),
+            'resourcePath': '/' + path,
+            'apis': generator.generate(apis),
+            'models': generator.get_models(apis),
+        })
 
     def get_apis_for_resource(self, filter_path):
         urlparser = UrlParser()
