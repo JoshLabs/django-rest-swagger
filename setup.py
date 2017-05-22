@@ -35,7 +35,7 @@ if version < ('2','7'):
 setup(
     name='django-rest-swagger',
     version=VERSION,
-    packages=['rest_framework_swagger'],
+    packages=['rest_framework_swagger', 'rest_framework_swagger/management', 'rest_framework_swagger/management/commands'],
     package_data={'rest_framework_swagger': ['rest_framework_swagger/templates/rest_framework_swagger/*', 'rest_framework_swagger/static/rest_framework_swagger/*']},
     include_package_data=True,
     license='FreeBSD License',

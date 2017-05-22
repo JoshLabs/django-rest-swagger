@@ -1,4 +1,5 @@
 import json
+from django.core.files.storage import get_storage_class
 from django.utils import six
 
 from django.views.generic import View
@@ -100,21 +101,28 @@ class SwaggerResourcesView(APIDocView):
     renderer_classes = (JSONRenderer, )
 
     def get(self, request):
-        apis = [{'path': '/' + path} for path in self.get_resources()]
-        return Response({
-            'apiVersion': rfs.SWAGGER_SETTINGS.get('api_version', ''),
-            'swaggerVersion': '1.2',
-            'basePath': self.get_base_path(),
-            'apis': apis,
-            'info': rfs.SWAGGER_SETTINGS.get('info', {
-                'contact': '',
-                'description': '',
-                'license': '',
-                'licenseUrl': '',
-                'termsOfServiceUrl': '',
-                'title': '',
-            }),
-        })
+        if rfs.SWAGGER_SETTINGS.get(u'ENABLE_OFFLINE_DOCS', False):
+            storage_class = rfs.SWAGGER_SETTINGS.get(u'DEFAULT_DOCS_STORAGE', u'')
+            assert storage_class, u'Swagger setting DEFAULT_DOCS_STORAGE must be set for offline mode to work'
+            storage = get_storage_class(storage_class)(**rfs.SWAGGER_SETTINGS.get(u'FILE_STORAGE_KWARGS', {}))
+            f = storage.open(u'docs/base.json')
+            return Response(json.loads(f.read()))
+        else:
+            apis = [{'path': '/' + path} for path in self.get_resources()]
+            return Response({
+                'apiVersion': rfs.SWAGGER_SETTINGS.get('api_version', ''),
+                'swaggerVersion': '1.2',
+                'basePath': self.get_base_path(),
+                'apis': apis,
+                'info': rfs.SWAGGER_SETTINGS.get('info', {
+                    'contact': '',
+                    'description': '',
+                    'license': '',
+                    'licenseUrl': '',
+                    'termsOfServiceUrl': '',
+                    'title': '',
+                }),
+            })
 
     def get_base_path(self):
         try:
