@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     def handle(self, *args, **options):
         assert rfs.SWAGGER_SETTINGS.get(u'ENABLE_OFFLINE_DOCS', False), u'Swagger setting ENABLE_OFFLINE_DOCS must be set to generate offline docs'
-        logger.info(u'Deleting previous docs')
         storage_class = rfs.SWAGGER_SETTINGS.get(u'DEFAULT_DOCS_STORAGE', u'')
         assert storage_class, u'Swagger setting DEFAULT_DOCS_STORAGE must be set to generate offline docs'
         storage = get_storage_class(storage_class)(**rfs.SWAGGER_SETTINGS.get(u'FILE_STORAGE_KWARGS', {}))
         if storage.exists(u'docs'):
+            logger.info(u'Deleting previous docs')
             clear_dir(u'docs', storage)
 
         logger.info(u'Generating Docs')
@@ -33,7 +33,6 @@ class Command(BaseCommand):
             filename = u'docs/{}.json'.format(path.replace(u'/', os.sep))
             storage.save(filename, ContentFile(renderer.render(generate_offline_docs(path))))
             app[u'path'] = storage.url(filename).replace(u'json', u'{format}')
-            print app[u'path']
         logger.info(u'Generating base.json')
         storage.save(u'docs/base.json', ContentFile(renderer.render(apps)))
 
@@ -62,19 +61,19 @@ def get_apps():
     exclude_namespaces = rfs.SWAGGER_SETTINGS.get(u'exclude_namespaces')
     resources = url_parser.get_top_level_apis(url_parser.get_apis(exclude_namespaces=exclude_namespaces))
     return {
-            u'apiVersion': rfs.SWAGGER_SETTINGS.get(u'api_version', u''),
-            u'swaggerVersion': u'1.2',
-            u'basePath': rfs.SWAGGER_SETTINGS.get(u'offline_base_path', u''),
-            u'apis': [{u'path': u'/{}'.format(path)} for path in resources],
-            u'info': rfs.SWAGGER_SETTINGS.get(u'info', {
-                u'contact': u'',
-                u'description': u'',
-                u'license': u'',
-                u'licenseUrl': u'',
-                u'termsOfServiceUrl': u'',
-                u'title': u'',
-            }),
-        }
+        u'apiVersion': rfs.SWAGGER_SETTINGS.get(u'api_version', u''),
+        u'swaggerVersion': u'1.2',
+        u'basePath': rfs.SWAGGER_SETTINGS.get(u'offline_base_path', u''),
+        u'apis': [{u'path': u'/{}'.format(path)} for path in resources],
+        u'info': rfs.SWAGGER_SETTINGS.get(u'info', {
+            u'contact': u'',
+            u'description': u'',
+            u'license': u'',
+            u'licenseUrl': u'',
+            u'termsOfServiceUrl': u'',
+            u'title': u'',
+        }),
+    }
 
 
 def generate_offline_docs(path=u''):
@@ -87,10 +86,10 @@ def generate_offline_docs(path=u''):
     doc_generator = DocumentationGenerator()
     url = urlparse.urlparse(rfs.SWAGGER_SETTINGS.get(u'offline_base_path', u''))
     return {
-            u'apiVersion': rfs.SWAGGER_SETTINGS.get(u'api_version', u''),
-            u'swaggerVersion': u'1.2',
-            u'basePath': u'{}://{}:{}'.format(url.scheme, url.hostname, url.port),
-            u'resourcePath': path,
-            u'apis': doc_generator.generate(api_list),
-            u'models': doc_generator.get_models(api_list),
-        }
+        u'apiVersion': rfs.SWAGGER_SETTINGS.get(u'api_version', u''),
+        u'swaggerVersion': u'1.2',
+        u'basePath': u'{}://{}:{}'.format(url.scheme, url.hostname, url.port),
+        u'resourcePath': path,
+        u'apis': doc_generator.generate(api_list),
+        u'models': doc_generator.get_models(api_list),
+    }
