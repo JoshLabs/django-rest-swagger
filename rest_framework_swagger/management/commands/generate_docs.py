@@ -84,11 +84,10 @@ def generate_offline_docs(path=u''):
     """
     api_list = UrlParser().get_apis(filter_path=path)
     doc_generator = DocumentationGenerator()
-    url = urlparse.urlparse(rfs.SWAGGER_SETTINGS.get(u'offline_base_path', u''))
     return {
         u'apiVersion': rfs.SWAGGER_SETTINGS.get(u'api_version', u''),
         u'swaggerVersion': u'1.2',
-        u'basePath': u'{}://{}:{}'.format(url.scheme, url.hostname, url.port),
+        u'basePath': rfs.SWAGGER_SETTINGS.get(u'offline_base_path', u''),
         u'resourcePath': path,
         u'apis': doc_generator.generate(api_list),
         u'models': doc_generator.get_models(api_list),
